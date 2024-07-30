@@ -1,1 +1,451 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Inventario de Papelería</title>
+
+    <style>
+
+        body {
+
+            font-family: Arial, sans-serif;
+
+            margin: 20px;
+
+        }
+
+        h1 {
+
+            text-align: center;
+
+        }
+
+        .container {
+
+            max-width: 600px;
+
+            margin: auto;
+
+        }
+
+        .log, .novedades {
+
+            border: 1px solid #ccc;
+
+            padding: 10px;
+
+            margin-top: 20px;
+
+            max-height: 300px;
+
+            overflow-y: auto;
+
+        }
+
+    </style>
+
+    <script type="text/javascript">
+
+        // Existencias de productos con precios
+
+        const existencias = {
+
+            "Cuaderno": [{ cantidad: 20, unidad: "piezas", precio: 15.00 }],
+
+            "Pluma": [{ cantidad: 15, unidad: "piezas", precio: 3.00 }],
+
+            "Papel bond": [{ cantidad: 30, unidad: "hojas", precio: 0.50 }],
+
+            "Resaltador": [{ cantidad: 10, unidad: "piezas", precio: 5.00 }],
+
+            "Lápiz": [{ cantidad: 25, unidad: "piezas", precio: 1.50 }],
+
+            "Goma": [{ cantidad: 12, unidad: "piezas", precio: 2.00 }],
+
+            "Regla": [{ cantidad: 8, unidad: "piezas", precio: 6.00 }],
+
+            "Cinta adhesiva": [{ cantidad: 5, unidad: "rollos", precio: 8.00 }],
+
+            "Folder": [{ cantidad: 18, unidad: "piezas", precio: 2.50 }],
+
+            "Tijeras": [{ cantidad: 10, unidad: "piezas", precio: 10.00 }],
+
+            "Cinta": [{ cantidad: 3, unidad: "rollos", precio: 7.00 },
+
+               
+
+            ]
+
+        };
+
+
+
+        // Función para limpiar el historial de actividad
+
+        function limpiarHistorial() {
+
+            document.getElementById("log").innerHTML = "";
+
+            document.getElementById("novedades").innerHTML = "";
+
+        }
+
+
+
+        // Función para mostrar mensajes en la pantalla principal
+
+        function mostrarMensaje(mensaje) {
+
+            const log = document.getElementById("log");
+
+            const p = document.createElement("p");
+
+            p.textContent = mensaje;
+
+            log.appendChild(p);
+
+        }
+
+
+
+        // Función para mostrar novedades en la pantalla principal
+
+        function mostrarNovedad(novedad) {
+
+            const novedades = document.getElementById("novedades");
+
+            const p = document.createElement("p");
+
+            p.textContent = novedad;
+
+            novedades.appendChild(p);
+
+        }
+
+
+
+        // Función para capitalizar la primera letra de una cadena
+
+        function capitalizarPrimeraLetra(str) {
+
+            return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+
+        }
+
+
+
+        // Función para normalizar cadenas eliminando acentos
+
+        function normalizarCadena(cadena) {
+
+            return cadena.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+        }
+
+
+
+        // Función para encontrar el producto sin distinguir acentos
+
+        function encontrarProducto(producto) {
+
+            producto = normalizarCadena(producto);
+
+            let resultados = [];
+
+            for (let key in existencias) {
+
+                if (normalizarCadena(key).includes(producto)) {
+
+                    resultados.push({ clave: key, variantes: existencias[key] });
+
+                }
+
+            }
+
+            return resultados.length > 0 ? resultados : null;
+
+        }
+
+
+
+        // Función para actualizar las existencias
+
+        function actualizarExistencias(producto, cantidad, esEntrada) {
+
+            let productos = encontrarProducto(producto);
+
+            if (productos && productos.length === 1) {
+
+                let key = productos[0].clave;
+
+                if (esEntrada) {
+
+                    // Agregar una nueva entrada de producto si es una entrada
+
+                    existencias[key].push({ cantidad: cantidad, unidad: existencias[key][0].unidad, precio: parseFloat(existencias[key][0].precio) });
+
+                    mostrarMensaje(`Se añadieron ${cantidad} ${existencias[key][0].unidad} de ${key}.`);
+
+                    mostrarNovedad(`Añadido: ${cantidad} ${existencias[key][0].unidad} de ${key}.`);
+
+                } else {
+
+                    let retirado = false;
+
+                    for (let i = 0; i < existencias[key].length; i++) {
+
+                        if (existencias[key][i].cantidad >= cantidad) {
+
+                            existencias[key][i].cantidad -= cantidad;
+
+                            mostrarMensaje(`Se retiraron ${cantidad} ${existencias[key][i].unidad} de ${key}. Total en existencia: ${existencias[key][i].cantidad} ${existencias[key][i].unidad}.`);
+
+                            mostrarNovedad(`Retirado: ${cantidad} ${existencias[key][i].unidad} de ${key}.`);
+
+                            retirado = true;
+
+                            break;
+
+                        }
+
+                    }
+
+                    if (!retirado) {
+
+                        mostrarMensaje(`No hay suficientes existencias de ${key} para retirar ${cantidad} ${existencias[key][0].unidad}.`);
+
+                    }
+
+                }
+
+            } else {
+
+                mostrarMensaje(`El producto ${producto} no existe en el inventario o hay múltiples resultados.`);
+
+            }
+
+        }
+
+
+
+        // Función para manejar la búsqueda de productos
+
+        function busquedaProducto() {
+
+            limpiarHistorial();
+
+            let producto = prompt("Ingrese el nombre del producto para búsqueda:").trim();
+
+            let productos = encontrarProducto(producto);
+
+            if (productos && productos.length > 0) {
+
+                productos.forEach((producto) => {
+
+                    producto.variantes.forEach((item, index) => {
+
+                        mostrarMensaje(`${producto.clave}: Cantidad: ${item.cantidad} ${item.unidad}. Precio: $${parseFloat(item.precio).toFixed(2)} MXN.`);
+
+                    });
+
+                });
+
+            } else {
+
+                mostrarMensaje(`El producto ${producto} no existe en el inventario.`);
+
+            }
+
+        }
+
+
+
+        // Función para manejar la salida de productos
+
+        function salidaProducto() {
+
+            limpiarHistorial();
+
+            let producto = prompt("Ingrese el nombre del producto para salida:").trim();
+
+            let cantidad = parseInt(prompt("Ingrese la cantidad:"));
+
+            if (!isNaN(cantidad) && cantidad > 0) {
+
+                actualizarExistencias(producto, cantidad, false);
+
+            } else {
+
+                mostrarMensaje("Cantidad no válida.");
+
+            }
+
+        }
+
+
+
+        // Función para mostrar las existencias actuales
+
+        function mostrarExistencias() {
+
+            limpiarHistorial();
+
+            mostrarMensaje("Existencias actuales:");
+
+            for (let producto in existencias) {
+
+                if (existencias.hasOwnProperty(producto)) {
+
+                    existencias[producto].forEach((item, index) => {
+
+                        mostrarMensaje(`${producto}: Cantidad: ${item.cantidad} ${item.unidad}. Precio: $${parseFloat(item.precio).toFixed(2)} MXN`);
+
+                    });
+
+                }
+
+            }
+
+        }
+
+
+
+        // Función para agregar un nuevo producto
+
+        function agregarProducto() {
+
+            limpiarHistorial();
+
+            let nuevoProducto = prompt("Ingrese el nombre del nuevo producto:").trim();
+
+            let unidad = prompt("Ingrese la unidad de medida (e.g., piezas, rollos, hojas):").trim();
+
+            let cantidad = parseInt(prompt("Ingrese la cantidad inicial:"));
+
+            let precio = parseFloat(prompt("Ingrese el precio del producto:"));
+
+            nuevoProducto = capitalizarPrimeraLetra(nuevoProducto);
+
+
+
+            if (existencias[encontrarProducto(nuevoProducto)]) {
+
+                existencias[nuevoProducto].push({ cantidad: cantidad, unidad: unidad, precio: precio });
+
+                mostrarMensaje(`Producto ${nuevoProducto} añadido con ${cantidad} ${unidad} y precio de $${precio.toFixed(2)} MXN.`);
+
+                mostrarNovedad(`Añadido nuevo producto: ${nuevoProducto} con ${cantidad} ${unidad} y precio de $${precio.toFixed(2)} MXN.`);
+
+            } else if (!isNaN(cantidad) && cantidad > 0 && unidad && !isNaN(precio) && precio > 0) {
+
+                existencias[nuevoProducto] = [{ cantidad: cantidad, unidad: unidad, precio: precio }];
+
+                mostrarMensaje(`Producto ${nuevoProducto} añadido con ${cantidad} ${unidad} y precio de $${precio.toFixed(2)} MXN.`);
+
+                mostrarNovedad(`Añadido nuevo producto: ${nuevoProducto} con ${cantidad} ${unidad} y precio de $${precio.toFixed(2)} MXN.`);
+
+            } else {
+
+                mostrarMensaje("Datos no válidos. No se pudo agregar el producto.");
+
+            }
+
+        }
+
+
+
+        // Función para eliminar un producto del inventario
+
+        function eliminarProducto() {
+
+            limpiarHistorial();
+
+            let producto = prompt("Ingrese el nombre del producto para eliminar:").trim();
+
+            let productos = encontrarProducto(producto);
+
+            if (productos && productos.length === 1) {
+
+                let key = productos[0].clave;
+
+                delete existencias[key];
+
+                mostrarMensaje(`Producto ${key} eliminado del inventario.`);
+
+                mostrarNovedad(`Eliminado producto: ${key} del inventario.`);
+
+            } else {
+
+                mostrarMensaje(`El producto ${producto} no existe en el inventario o hay múltiples resultados.`);
+
+            }
+
+        }
+
+
+
+        // Función para limpiar todo el contenido sin mostrar mensaje
+
+        function limpiarTodo() {
+
+            limpiarHistorial();
+
+        }
+
+
+
+        window.onload = function() {
+
+            document.getElementById("buscar").addEventListener("click", busquedaProducto);
+
+            document.getElementById("salida").addEventListener("click", salidaProducto);
+
+            document.getElementById("existencias").addEventListener("click", mostrarExistencias);
+
+            document.getElementById("agregar").addEventListener("click", agregarProducto);
+
+            document.getElementById("eliminar").addEventListener("click", eliminarProducto);
+
+            document.getElementById("limpiar").addEventListener("click", limpiarTodo);
+
+        };
+
+    </script>
+
+</head>
+
+<body>
+
+    <h1>Inventario de Papelería</h1>
+
+    <div class="container">
+
+        <button id="buscar">Búsqueda de Producto</button>
+
+        <button id="salida">Salida de Producto</button>
+
+        <button id="existencias">Mostrar Existencias</button>
+
+        <button id="agregar">Agregar Producto</button>
+
+        <button id="eliminar">Eliminar Producto</button>
+
+        <button id="limpiar">Limpiar Todo</button>
+
+        <div id="log" class="log"></div>
+
+        <div id="novedades" class="novedades"></div>
+
+    </div>
+
+</body>
+
+</html>
+
 
